@@ -1,4 +1,5 @@
 from numpy.random.mtrand import randint
+import csv
 import pathlib
 import os
 import pandas as pd
@@ -6,7 +7,7 @@ import numpy as np
 import random as rd
 from datetime import timedelta
 import mplfinance as mpf
-import matplotlib.pyplot as plt
+from PIL import Image
 
 
 
@@ -84,9 +85,9 @@ def generate_rising_wedge(index=0):
     df.set_index('Date', inplace=True)
     custom_style = mpf.make_mpf_style(base_mpf_style='charles', gridstyle='')
     figsize_multiplier = 0.5
-    path = pathlib.Path("wedges_triangles_data") / f"sym_tri{index}.png"
-    mpf.plot(df, type='candle', style=custom_style, title='', ylabel='Price', axisoff=True,  figsize=(num_data_points * figsize_multiplier*0.3, 6*0.3), savefig=path, scale_padding=0)
-    
+    path = pathlib.Path("wedges_triangles_data") / f"r_wedge{index}.png"
+    fig = mpf.plot(df, type='candle', style=custom_style, title='', ylabel='Price', axisoff=True,  figsize=(num_data_points * figsize_multiplier*0.3, 6*0.3), savefig=path, scale_padding=0)
+    return {"path":path, "class":"Rising Wedge"}  
 
 
 def generate_falling_wedge(index=0):
@@ -163,9 +164,9 @@ def generate_falling_wedge(index=0):
     df.set_index('Date', inplace=True)
     custom_style = mpf.make_mpf_style(base_mpf_style='charles', gridstyle='')
     figsize_multiplier = 0.5
-    path = pathlib.Path("wedges_triangles_data") / f"sym_tri{index}.png"
-    mpf.plot(df, type='candle', style=custom_style, title='', ylabel='Price', axisoff=True,  figsize=(num_data_points * figsize_multiplier*0.3, 6*0.3), savefig=path, scale_padding=0)
-    
+    path = pathlib.Path("wedges_triangles_data") / f"f_wedge{index}.png"
+    fig = mpf.plot(df, type='candle', style=custom_style, title='', ylabel='Price', axisoff=True,  figsize=(num_data_points * figsize_multiplier*0.3, 6*0.3), savefig=path, scale_padding=0)
+    return {"path":path, "class":"Falling Wedge"}   
 
 
 
@@ -245,7 +246,32 @@ def generate_symmetrical_triangle(index=0):
     custom_style = mpf.make_mpf_style(base_mpf_style='charles', gridstyle='')
     figsize_multiplier = 0.5
     path = pathlib.Path("wedges_triangles_data") / f"sym_tri{index}.png"
-    mpf.plot(df, type='candle', style=custom_style, title='', ylabel='Price', axisoff=True,  figsize=(num_data_points * figsize_multiplier*0.3, 6*0.3), savefig=path, scale_padding=0)
+    fig = mpf.plot(df, type='candle', style=custom_style, title='', ylabel='Price', axisoff=True,  figsize=(num_data_points * figsize_multiplier*0.3, 6*0.3), savefig=path, scale_padding=0)
+    return {"path":path, "class":"Symmetrical Triangle"}
+    
+
+
+def write_to_csv(image):
+    csv_file_path = str(image["path"]).split("\\")[0] + "\\patterns_dataset.csv"
+    
+    if not os.path.isfile(csv_file_path):
+        with open(csv_file_path, mode='w', newline='') as label_file:
+            label_writer = csv.writer(label_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            label_writer.writerow(['filename', 'width', 'height', 'class', 'xmin', 'ymin', 'xmax', 'ymax'])
+
+    
+    with Image.open(image["path"]) as img:
+        width, height = img.size
+        filename = str(image["path"]).split("\\")[1]
+        class_name = image["class"]
+        xmin, ymin = 0, 0
+        xmax, ymax = width, height
+        with open(csv_file_path, mode='a', newline='') as label_file:
+            label_writer = csv.writer(label_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            label_writer.writerow([filename, width, height, class_name, xmin, ymin, xmax, ymax])
+
+
+
     
 
 
@@ -255,6 +281,11 @@ if not os.path.exists(directory):
     os.makedirs(directory)
 
 
-for i in range(10):
-    generate_symmetrical_triangle(i)
+for i in range(300):
+    write_to_csv(generate_rising_wedge(i))    
+    write_to_csv(generate_falling_wedge(i))
+    write_to_csv(generate_symmetrical_triangle(i))
+    
+
+
     
